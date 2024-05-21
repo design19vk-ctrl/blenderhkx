@@ -11,10 +11,10 @@ from io_hkx_animation.ixml import DocumentInterface
 from io_hkx_animation.ixml import ReferenceFrame
 from io_hkx_animation.ixml import Track
 from io_hkx_animation.prefs import EXEC_NAME
-from io_hkx_animation.props import AXES
 
 SAMPLING_RATE = 30
 
+@bpy_extras.io_utils.orientation_helper(axis_forward='Y', axis_up='Z')
 class HKXIO(bpy.types.Operator):
     
     length_scale: bpy.props.FloatProperty(
@@ -32,22 +32,6 @@ class HKXIO(bpy.types.Operator):
         description="Path to the skeleton of the second actor in a paired animation",
     )
     
-    bone_forward: bpy.props.EnumProperty(
-        items=AXES,
-        name="Forward axis",
-        description="This axis will be mapped to Blender's Y axis",
-        default='Y',
-        #update=callbackfcn
-    )
-    
-    bone_up: bpy.props.EnumProperty(
-        items=AXES,
-        name="Up axis",
-        description="This axis will be mapped to Blender's Z axis",
-        default='Z',
-        #update=callbackfcn
-    )
-    
     def init_settings(self, context):
         #set skeleton path(s) to that of the active armature(s) (default if none)
         
@@ -56,8 +40,8 @@ class HKXIO(bpy.types.Operator):
         
         if active and active.type == 'ARMATURE':
             self.primary_skeleton = active.data.iohkx.skeleton_path
-            self.bone_forward = active.data.iohkx.bone_forward
-            self.bone_up = active.data.iohkx.bone_up
+            self.axis_forward = active.data.iohkx.axis_forward
+            self.axis_up = active.data.iohkx.axis_up
         
         #default if none
         if self.primary_skeleton == "":
@@ -68,11 +52,6 @@ class HKXIO(bpy.types.Operator):
         for obj in selected:
             if obj.type == 'ARMATURE' and obj != active:
                 self.secondary_skeleton = obj.data.iohkx.skeleton_path
-                
-                #need to decide how to store and expose the axis conventions!
-                
-                #self.bone_forward = obj.data.iohkx.bone_forward
-                #self.bone_up = obj.data.iohkx.bone_up
                 break
         
         #default if none 
@@ -136,7 +115,7 @@ class HKXImport(HKXIO, bpy_extras.io_utils.ImportHelper):
     def execute(self, context):
         try:
             #setup axis conversion
-            self.axis_conversion(from_forward=self.bone_forward, from_up=self.bone_up)
+            self.axis_conversion(from_forward=self.axis_forward, from_up=self.axis_up)
             
             #Set fps to 30 (and warn if it wasn't)
             if context.scene.render.fps != SAMPLING_RATE:
@@ -332,8 +311,8 @@ class HKXImport(HKXIO, bpy_extras.io_utils.ImportHelper):
         
         #store our custom properties
         data.iohkx.skeleton_path = path
-        data.iohkx.bone_forward = self.bone_forward
-        data.iohkx.bone_up = self.bone_up
+        data.iohkx.axis_forward = self.axis_forward
+        data.iohkx.axis_up = self.axis_up
         
         #start editing armature
         context.view_layer.objects.active = armature
@@ -463,7 +442,7 @@ class HKXExport(HKXIO, bpy_extras.io_utils.ExportHelper):
     def execute(self, context):
         try:
             #setup axis conversion
-            self.axis_conversion(to_forward=self.bone_forward, to_up=self.bone_up)
+            self.axis_conversion(to_forward=self.axis_forward, to_up=self.axis_up)
             
             #Look for the converter
             tool = self.get_converter(context.preferences)
@@ -491,8 +470,8 @@ class HKXExport(HKXIO, bpy_extras.io_utils.ExportHelper):
             #Save our custom properties
             for arma, path in zip(armatures, [self.primary_skeleton, self.secondary_skeleton]):
                 arma.data.iohkx.skeleton_path = path
-                arma.data.iohkx.bone_forward = self.bone_forward
-                arma.data.iohkx.bone_up = self.bone_up
+                arma.data.iohkx.axis_forward = self.axis_forward
+                arma.data.iohkx.axis_up = self.axis_up
             
             #create a document
             doc = DocumentInterface.create()
