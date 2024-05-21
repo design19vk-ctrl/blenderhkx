@@ -224,13 +224,17 @@ class HKXImport(HKXIO, bpy_extras.io_utils.ImportHelper):
                 #of separation from y should be less than epsilon.
                 #It might be simpler to just check the angle between separation and y,
                 #but that makes the error threshold slightly more complicated instead.
-                assert abs(1.0 - bone.y_axis.length) < epsilon, "invalid assumption"
-                scalar_projection = separation.dot(bone.y_axis)
+                #assert abs(1.0 - bone.y_axis.length) < epsilon, "invalid assumption"
+                #scalar_projection = separation.dot(bone.y_axis)
                 #reject bones on the negative side
-                if scalar_projection >= 0.0:
-                    rejection = separation - scalar_projection * bone.y_axis
-                    if rejection.length < epsilon:
-                        return child, separation.length
+                #if scalar_projection >= 0.0:
+                #    rejection = separation - scalar_projection * bone.y_axis
+                #    if rejection.length < epsilon:
+                #        return child, separation.length
+
+                #do it the angle way instead, it's more robust to scaling
+                if abs(separation.angle(bone.y_axis)) < epsilon:
+                    return child, separation.length
         
         #we found no connected child
         return None, None
