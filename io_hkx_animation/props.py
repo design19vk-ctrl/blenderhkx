@@ -15,6 +15,8 @@ class ArmaturePanel(bpy.types.Panel):
         return (context.object and context.object.type == 'ARMATURE')
     
     def draw(self, context):
+        self.layout.prop(context.object.data.iohkx, "length_scale")
+
         self.layout.prop(context.object.data.iohkx, "skeleton_path")
         
         #Is it stupid to show these here? 
@@ -29,6 +31,11 @@ class ArmatureProperties(bpy.types.PropertyGroup):
         name="Skeleton",
         description="Path to the HKX skeleton file",
         subtype='FILE_PATH')
+
+    length_scale: bpy.props.FloatProperty(
+        name="Length scale",
+        description="Scale factor for length units",
+        default=10.0)
 
 
 class BonePanel(bpy.types.Panel):
