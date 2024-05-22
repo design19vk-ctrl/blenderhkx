@@ -39,6 +39,7 @@ class HKXIO(bpy.types.Operator):
         active = context.view_layer.objects.active
         
         if active and active.type == 'ARMATURE':
+            self.length_scale = active.data.iohkx.length_scale
             self.primary_skeleton = active.data.iohkx.skeleton_path
             self.axis_forward = active.data.iohkx.axis_forward
             self.axis_up = active.data.iohkx.axis_up
@@ -314,6 +315,7 @@ class HKXImport(HKXIO, bpy_extras.io_utils.ImportHelper):
         context.scene.collection.objects.link(armature)
         
         #store our custom properties
+        data.iohkx.length_scale = self.length_scale
         data.iohkx.skeleton_path = path
         data.iohkx.axis_forward = self.axis_forward
         data.iohkx.axis_up = self.axis_up
@@ -473,6 +475,7 @@ class HKXExport(HKXIO, bpy_extras.io_utils.ExportHelper):
             
             #Save our custom properties
             for arma, path in zip(armatures, [self.primary_skeleton, self.secondary_skeleton]):
+                arma.data.iohkx.length_scale = self.length_scale
                 arma.data.iohkx.skeleton_path = path
                 arma.data.iohkx.axis_forward = self.axis_forward
                 arma.data.iohkx.axis_up = self.axis_up
